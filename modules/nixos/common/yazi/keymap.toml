@@ -1,0 +1,15 @@
+[manager]
+
+prepend_keymap = [
+  { on = [ "<F1>" ], run  = "plugin --sync max-preview", desc = "Maximize or restore preview"},
+
+  { on = [ "<F2>" ], run  = "plugin --sync hide-preview", desc = "Hide or show preview"},
+
+  { on = [ "<F3>" ], run = 'shell "lazygit" --block --confirm', desc = "Run lazygit" },
+
+  { on = [ "<F4>" ], run = 'shell "$SHELL" --block --confirm', desc = "Open shell here" },
+
+  { on   = [ "c", "a" ], run  = "plugin compress", desc = "Archive selected files" },
+
+  { on   = [ "R" ], run  = "plugin rsync --args='FOSSadmin@10.10.1.99'", desc = "Copy files using rsync" },
+]
