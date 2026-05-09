@@ -1,0 +1,82 @@
+# local.nix — Local configuration (NOT TRACKED BY GIT)
+#
+# This file is for user-specific configuration that should NOT be committed to git.
+# It contains sensitive information like API keys, credentials, and machine-specific values.
+#
+# COPY THIS FILE before editing:
+#   cp local.nix.example local.nix
+#
+# Then edit local.nix with your values.
+#
+# IMPORTANT: local.nix is in .gitignore - DO NOT commit it!
+
+{
+  # ============================================================
+  # USER CONFIGURATION
+  # ============================================================
+  
+  # Primary username (used for user creation, home directory, etc.)
+  user = "admin";
+  
+  # User's real name (for git config, etc.)
+  userName = "Your Name";
+  
+  # User email (for git config)
+  userEmail = "your.email@example.com";
+  
+  # ============================================================
+  # MACHINE-SPECIFIC CONFIGURATION
+  # ============================================================
+  
+  # Generate unique 8-digit hex ID for each machine:
+  #   python3 -c "import random; print(f'{random.randint(0, 0xffffffff):08x}')"
+  
+  machines = {
+    laptop = {
+      hostName = "narbs-laptop";
+      hostId = "aaaaaaaa";  # CHANGE THIS!
+      diskDevice = "/dev/nvme0n1";  # UPDATE THIS!
+      enableZFS = true;
+    };
+    
+    server = {
+      hostName = "narbs-server"; 
+      hostId = "bbbbbbbb";  # CHANGE THIS!
+      diskDevice = "/dev/sda";  # UPDATE THIS!
+      enableZFS = true;
+    };
+    
+    router = {
+      hostName = "narbs-router";
+      hostId = "cccccccc";  # CHANGE THIS!
+      diskDevice = "/dev/sda";  # UPDATE THIS!
+      enableZFS = false;  # Router uses ext4
+    };
+  };
+  
+  # Default ZFS pool name
+  poolName = "zroot";
+  
+  # ============================================================
+  # LOCALE & TIMEZONE
+  # ============================================================
+  
+  locale = {
+    timeZone = "America/New_York";  # Change to your timezone
+    language = "en_US.UTF-8";
+  };
+  
+  # ============================================================
+  # PRIVATE SECRETS (Optional - for advanced use)
+  # ============================================================
+  # These are typically managed by sops-nix or agenix
+  # Uncomment and use if needed:
+  #
+  # secrets = {
+  #   # Path to SSH private key file
+  #   sshKeyPath = "/persist/etc/ssh/ssh_host_ed25519_key";
+  #   
+  #   # Age key file for sops
+  #   ageKeyPath = "/etc/sops.age";
+  # };
+}
