@@ -1,0 +1,14 @@
+# .sops.yaml - SOPS age key configuration
+#
+# Use: sops --encrypt --in-place secrets/secrets.yaml
+
+keys:
+  - &admin_age
+    age: <your-age-public-key>
+    # Create with: age-keygen
+
+creation_rules:
+  - path_regex: secrets/.*
+    key_groups:
+      - age:
+          - *admin_age
