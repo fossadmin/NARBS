@@ -1,0 +1,44 @@
+# NARBS
+
+*.txt
+*.log
+.result/
+result/
+
+# Local configuration (contains sensitive data)
+local.nix
+
+# Local configuration template (keep this in git)
+# Copy to local.nix and configure for your machine
+
+# ─────────────────────────────────────────────────────────────────────
+# Editor backups
+# ─────────────────────────────────────────────────────────────────────
+*.swp
+*.swo
+*~
+
+# ─────────────────────────────────────────────────────────────────────
+# Direnv (nix develop shell)
+# ─────────────────────────────────────────────────────────────────────
+.direnv/
+
+# ─────────────────────────────────────────────────────────────────────
+# Secrets & Keys (common patterns)
+# ─────────────────────────────────────────────────────────────────────
+~/.config/sops/age/keys.txt
+*.age
+*.agekey
+keys.txt
+
+# sops age keys directory (if used)
+.sops/age/
+
+# Decrypted runtime secrets
+/run/secrets/*
+
+# ─────────────────────────────────────────────────────────────────────
+# Build artifacts
+# ─────────────────────────────────────────────────────────────────────
+result/
+*.drv
