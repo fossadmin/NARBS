@@ -7,6 +7,7 @@ set -uo pipefail
 # Colors
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
@@ -17,13 +18,13 @@ NARBS_DIR="$SCRIPT_DIR"
 USE_TUI=1
 for arg in "$@"; do
   case "$arg" in
-    --cli) USE_TUI=0 ;;
-    --tui|--whiptail) USE_TUI=1 ;;
-    --help|-h)
-      echo "Usage: $0 [--cli | --tui]"
-      echo "  TUI mode is default when running in a terminal."
-      exit 0
-      ;;
+  --cli) USE_TUI=0 ;;
+  --tui | --whiptail) USE_TUI=1 ;;
+  --help | -h)
+    echo "Usage: $0 [--cli | --tui]"
+    echo "  TUI mode is default when running in a terminal."
+    exit 0
+    ;;
   esac
 done
 
@@ -38,7 +39,7 @@ fi
 should_tui() {
   [ "$USE_TUI" -eq 0 ] && return 1
   [ ! -t 0 ] && return 1
-  
+
   if ! command -v whiptail &>/dev/null; then
     if command -v nix-shell &>/dev/null; then
       echo "Installing whiptail (newt) via nix-shell..."
@@ -82,13 +83,13 @@ It will ask questions and create local.nix." \
         username=$(whiptail --title "NARBS Setup" --inputbox "Enter your username (lowercase, no spaces):" 10 60 3>&1 1>&2 2>&3) || exit 1
       fi
     else
-        username=$(whiptail --title "NARBS Setup" --inputbox "Enter your username (lowercase, no spaces):" 10 60 3>&1 1>&2 2>&3) || exit 1
+      username=$(whiptail --title "NARBS Setup" --inputbox "Enter your username (lowercase, no spaces):" 10 60 3>&1 1>&2 2>&3) || exit 1
     fi
   done
 
   full_name=$(whiptail --title "NARBS Setup" --inputbox "Enter your full name (Real Name):" 10 60 3>&1 1>&2 2>&3) || exit 1
   user_email=$(whiptail --title "NARBS Setup" --inputbox "Enter your email:" 10 60 3>&1 1>&2 2>&3) || exit 1
-  
+
   hostname=$(whiptail --title "NARBS Setup" --inputbox "Enter hostname for this machine:" 10 60 3>&1 1>&2 2>&3) || exit 1
   while [ -z "$hostname" ]; do
     $DIALOG --title "Error" --msgbox "Hostname cannot be empty." 8 40
@@ -104,7 +105,7 @@ It will ask questions and create local.nix." \
 
   # Security / SOPS options
   setup_secrets=$(whiptail --title "Security" --yesno "Would you like to generate SSH and Age keys for sops-nix?" 10 60 3>&1 1>&2 2>&3 && echo "yes" || echo "no")
-  
+
   if [ "$setup_secrets" = "yes" ]; then
     ssh_key_path="/persist/etc/ssh/ssh_host_ed25519_key"
     age_key_path="/persist/var/lib/sops-nix/key.txt"
@@ -190,9 +191,9 @@ It will ask questions and create local.nix." \
     disk_device=$(whiptail --title "Disk Device" --menu "Select disk:" 20 60 10 "${disks[@]}" 3>&1 1>&2 2>&3) || exit 1
   fi
 
-    generate_local_nix "$username" "$full_name" "$user_email" "$host_type" "$hostname" "$hostid" "$disk_device" "$pool_name" "$timezone" "$ssh_key_path" "$age_key_path"
+  generate_local_nix "$username" "$full_name" "$user_email" "$host_type" "$hostname" "$hostid" "$disk_device" "$pool_name" "$timezone" "$ssh_key_path" "$age_key_path"
 
-    $DIALOG --title "Installation" --yesno "Configuration saved to local.nix.
+  $DIALOG --title "Installation" --yesno "Configuration saved to local.nix.
 
 Would you like to proceed with the installation?
 
@@ -212,29 +213,29 @@ WARNING: ALL DATA ON $disk_device WILL BE LOST!" 15 60 || exit 0
   # Use zap_create_mount to ensure a clean slate
   nix --experimental-features "nix-command flakes" run github:nix-community/disko -- --mode zap_create_mount --flake ".#$host_type"
 
-    # 2. Install NixOS
-    echo -e "\n${BLUE}Step 2: Installing NixOS to /mnt...${NC}"
-    # Temporarily force-add local.nix to git so nix can see it without --impure
-    git add -f local.nix 2>/dev/null || true
-    
-    # --no-root-passwd lets the user set it at the end of the install
-    nixos-install --flake ".#$host_type" --no-root-passwd
-    
-    # Untrack local.nix after install
-    git reset local.nix 2>/dev/null || true
+  # 2. Install NixOS
+  echo -e "\n${BLUE}Step 2: Installing NixOS to /mnt...${NC}"
+  # Temporarily force-add local.nix to git so nix can see it without --impure
+  git add -f local.nix 2>/dev/null || true
 
-    # 3. Post-install: Setup keys for SOPS if requested
+  # --no-root-passwd lets the user set it at the end of the install
+  nixos-install --flake ".#$host_type" --no-root-passwd
+
+  # Untrack local.nix after install
+  git reset local.nix 2>/dev/null || true
+
+  # 3. Post-install: Setup keys for SOPS if requested
   if [ -n "$ssh_key_path" ]; then
     echo -e "\n${BLUE}Step 3: Generating SOPS keys...${NC}"
-    
+
     # Generate SSH host key (also used for SOPS)
     mkdir -p "/mnt$(dirname "$ssh_key_path")"
     ssh-keygen -t ed25519 -N "" -f "/mnt$ssh_key_path"
-    
+
     # Generate Age key from SSH key using ssh-to-age
     mkdir -p "/mnt$(dirname "$age_key_path")"
     nix-shell -p ssh-to-age --run "ssh-to-age -private-key -i /mnt$ssh_key_path > /mnt$age_key_path"
-    
+
     echo "Keys generated:"
     echo "  SSH: $ssh_key_path"
     echo "  Age: $age_key_path"
@@ -251,11 +252,11 @@ run_cli() {
     local prompt="$1"
     local default="$2"
     local value
-    
+
     printf "%s" "$prompt"
     [ -n "$default" ] && printf " [%s]" "$default"
     printf ": "
-    
+
     read -r value </dev/tty
     [ -z "$value" ] && value="$default"
     echo "$value"
@@ -269,7 +270,7 @@ run_cli() {
     local opts=("$@")
     local n=$#
     local choice
-    
+
     while true; do
       echo ""
       echo "$prompt"
@@ -278,15 +279,18 @@ run_cli() {
         echo "  $i) $opt"
         i=$((i + 1))
       done
-      
+
       printf "Choice [%s]: " "$default"
-      
+
       read -r choice </dev/tty
       choice="${choice:-$default}"
       if [[ "$choice" =~ ^[0-9]+$ ]] && [ "$choice" -ge 1 ] && [ "$choice" -le $n ]; then
         i=1
         for opt in "$@"; do
-          [ "$choice" = "$i" ] && { echo "$opt"; return 0; }
+          [ "$choice" = "$i" ] && {
+            echo "$opt"
+            return 0
+          }
           i=$((i + 1))
         done
       fi
@@ -348,64 +352,64 @@ run_cli() {
   # ZFS options
   if [ "$host_type" != "router" ]; then
     hostid_choice=$(prompt_choice "ZFS Configuration" 1 "Auto-generate HostId" "Enter HostId manually" "No ZFS (disable)")
-    
+
     case "$hostid_choice" in
-      "Enter HostId manually")
-        hostid=$(prompt "Enter 8-char hex hostId" "")
-        [ "$host_type" = "workstation" ] && pool_name="rpool" || pool_name="zroot"
-        ;;
-      "No ZFS (disable)")
-        hostid=""
-        pool_name=""
-        ;;
-      *)
-        hostid=$(generate_hostid)
-        echo "  Generated HostId: $hostid"
-        [ "$host_type" = "workstation" ] && pool_name="rpool" || pool_name="zroot"
-        ;;
+    "Enter HostId manually")
+      hostid=$(prompt "Enter 8-char hex hostId" "")
+      [ "$host_type" = "workstation" ] && pool_name="rpool" || pool_name="zroot"
+      ;;
+    "No ZFS (disable)")
+      hostid=""
+      pool_name=""
+      ;;
+    *)
+      hostid=$(generate_hostid)
+      echo "  Generated HostId: $hostid"
+      [ "$host_type" = "workstation" ] && pool_name="rpool" || pool_name="zroot"
+      ;;
     esac
-    
+
     local disk_opts=()
     if [ -d "/dev/disk/by-id" ]; then
       for dev in /dev/disk/by-id/*; do
         [[ -e "$dev" ]] || continue
         [[ "$dev" == *-part* ]] || [[ "$dev" == *wwn-* ]] || [[ "$dev" == *dm-* ]] || [[ "$dev" == *eui.* ]] || [[ "$dev" == *_1 ]] && continue
-        
+
         local target=$(readlink -f "$dev")
         local name=$(basename "$target")
         [[ "$name" == loop* ]] || [[ "$name" == sr* ]] && continue
-        
+
         disk_opts+=("$dev")
       done
     fi
     [ ${#disk_opts[@]} -eq 0 ] && disk_opts=("/dev/sda" "/dev/nvme0n1")
-    
+
     disk_device=$(prompt_choice "Select Disk Device" 1 "${disk_opts[@]}")
   else
     pool_name=""
     hostid=""
-    
+
     local disk_opts=()
     if [ -d "/dev/disk/by-id" ]; then
       for dev in /dev/disk/by-id/*; do
         [[ -e "$dev" ]] || continue
         [[ "$dev" == *-part* ]] || [[ "$dev" == *wwn-* ]] || [[ "$dev" == *dm-* ]] || [[ "$dev" == *eui.* ]] || [[ "$dev" == *_1 ]] && continue
-        
+
         local target=$(readlink -f "$dev")
         local name=$(basename "$target")
         [[ "$name" == loop* ]] || [[ "$name" == sr* ]] && continue
-        
+
         disk_opts+=("$dev")
       done
     fi
     [ ${#disk_opts[@]} -eq 0 ] && disk_opts=("/dev/sda" "/dev/nvme0n1")
-    
+
     disk_device=$(prompt_choice "Select Disk Device" 1 "${disk_opts[@]}")
   fi
 
-    generate_local_nix "$username" "$full_name" "$user_email" "$host_type" "$hostname" "$hostid" "$disk_device" "$pool_name" "$timezone" "$ssh_key_path" "$age_key_path"
+  generate_local_nix "$username" "$full_name" "$user_email" "$host_type" "$hostname" "$hostid" "$disk_device" "$pool_name" "$timezone" "$ssh_key_path" "$age_key_path"
 
-    echo -e "\n${GREEN}Configuration saved to local.nix.${NC}"
+  echo -e "\n${GREEN}Configuration saved to local.nix.${NC}"
   echo -e "${RED}WARNING: The next step will format $disk_device and ERASE ALL DATA!${NC}"
   read -p "Do you want to proceed with the installation? (y/N): " confirm </dev/tty
   if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
@@ -415,7 +419,7 @@ run_cli() {
 
   # Installation logic
   echo -e "\n${YELLOW}Starting NARBS Installation...${NC}"
-  
+
   # 1. Run Disko
   echo -e "\n${BLUE}Step 1: Partitioning and Formatting disk...${NC}"
   # Use zap_create_mount to ensure a clean slate
@@ -459,27 +463,27 @@ generate_local_nix() {
   local router_zfs="false"
 
   case "$host_type" in
-    workstation)
-      workstation_hostname="$hostname"
-      workstation_hostid="$hostid"
-      workstation_disk="$disk_device"
-      workstation_zfs=$([ -n "$hostid" ] && echo "true" || echo "false")
-      ;;
-    server)
-      server_hostname="$hostname"
-      server_hostid="$hostid"
-      server_disk="$disk_device"
-      server_zfs=$([ -n "$hostid" ] && echo "true" || echo "false")
-      ;;
-    router)
-      router_hostname="$hostname"
-      router_hostid="$hostid"
-      router_disk="$disk_device"
-      router_zfs=$([ -n "$hostid" ] && echo "true" || echo "false")
-      ;;
+  workstation)
+    workstation_hostname="$hostname"
+    workstation_hostid="$hostid"
+    workstation_disk="$disk_device"
+    workstation_zfs=$([ -n "$hostid" ] && echo "true" || echo "false")
+    ;;
+  server)
+    server_hostname="$hostname"
+    server_hostid="$hostid"
+    server_disk="$disk_device"
+    server_zfs=$([ -n "$hostid" ] && echo "true" || echo "false")
+    ;;
+  router)
+    router_hostname="$hostname"
+    router_hostid="$hostid"
+    router_disk="$disk_device"
+    router_zfs=$([ -n "$hostid" ] && echo "true" || echo "false")
+    ;;
   esac
 
-  cat > "$NARBS_DIR/local.nix" << EOF
+  cat >"$NARBS_DIR/local.nix" <<EOF
 # local.nix — Local configuration (NOT TRACKED BY GIT)
 #
 # This file is for user-specific configuration that should NOT be committed to git.
